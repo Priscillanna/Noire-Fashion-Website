@@ -3,9 +3,11 @@ name: Norie Fashion Website CI-CD
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   pull_request:
-    branches: [main]
+    branches:
+      - main
 
 permissions:
   contents: read
@@ -56,7 +58,11 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      
+      - name: Set lowercase image owner
+        if: github.event_name == 'push'
+        id: image
+        run: echo "owner=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Publish Docker image
         if: github.event_name == 'push'
         uses: docker/build-push-action@v6
@@ -64,5 +70,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/noire-fashion-website:latest
-            ghcr.io/${{ github.repository_owner }}/noire-fashion-website:${{ github.sha }}
+            ghcr.io/${{ steps.image.outputs.owner }}/noire-fashion-website:latest
+            ghcr.io/${{ steps.image.outputs.owner }}/noire-fashion-website:${{ github.sha }}
