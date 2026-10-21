@@ -1,0 +1,38 @@
+
+name: Norie Fashion Website CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t noire-fashion-web:ci .
+
+      - name: Start website container
+        run: docker run -d --name noire-test -p 3000:3000 noire-fashion-web:ci
+
+      - name: Test website response
+        run: |
+          for i in {1..30}; do
+            if curl --fail http://localhost:3000/; then
+              echo "Website is responding successfully"
+              exit 0
+            fi
+            sleep 2
+          done
+          docker logs noire-test
+          exit 1
+
+      - name: Clean up container
+        if: always()
+        run: docker rm -f noire-test || true
